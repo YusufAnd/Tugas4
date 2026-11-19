@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Daftar Tugas Kuliah</title>
+</head>
+<body>
+  <h1>Daftar Tugas Kuliah</h1>
+
+  <input type="hidden" id="id">
+  <input type="text" id="judul" placeholder="Judul tugas">
+  <input type="text" id="matkul" placeholder="Mata kuliah">
+  <input type="date" id="deadline">
+  <button onclick="simpan()">Simpan</button>
+
+  <br><br>
+  <table border="1" cellpadding="5">
+    <tr>
+      <th>Judul</th>
+      <th>Mata Kuliah</th>
+      <th>Deadline</th>
+      <th>Aksi</th>
+    </tr>
+    <tbody id="isi"></tbody>
+  </table>
+
+  <script>
+    var semuaTugas = [];
+
+    // ambil data dari server, lalu tampilkan di tabel
+    function tampil() {
+      fetch('/tugas')
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+          semuaTugas = data;
+          var html = '';
+          for (var i = 0; i < data.length; i++) {
+            html += '<tr>';
+            html += '<td>' + data[i].judul + '</td>';
+            html += '<td>' + data[i].matkul + '</td>';
+            html += '<td>' + data[i].deadline + '</td>';
+            html += '<td>';
+            html += '<button onclick="ubah(' + i + ')">Ubah</button> ';
+            html += '<button onclick="hapus(' + data[i].id + ')">Hapus</button>';
+            html += '</td>';
+            html += '</tr>';
+          }
+          document.getElementById('isi').innerHTML = html;
+        });
+    }
+
+    // simpan: kalau id kosong berarti tambah, kalau ada isinya berarti ubah
+    function simpan() {
+      var id = document.getElementById('id').value;
+      var data = {
+        judul: document.getElementById('judul').value,
+        matkul: document.getElementById('matkul').value,
+        deadline: document.getElementById('deadline').value
+      };
+
+      var alamat = '/tugas';
+      var metode = 'POST';
+      if (id != '') {
+        alamat = '/tugas/' + id;
+        metode = 'PUT';
+      }
+
+      fetch(alamat, {
+        method: metode,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      }).then(function () {
+        kosongkan();
+        tampil();
+      });
+    }
+
+    // isi form dengan data yang mau diubah
+    function ubah(i) {
+      document.getElementById('id').value = semuaTugas[i].id;
+      document.getElementById('judul').value = semuaTugas[i].judul;
+      document.getElementById('matkul').value = semuaTugas[i].matkul;
+      document.getElementById('deadline').value = semuaTugas[i].deadline;
+    }
+
+    function hapus(id) {
+      fetch('/tugas/' + id, { method: 'DELETE' }).then(function () {
+        tampil();
+      });
+    }
+
+    function kosongkan() {
+      document.getElementById('id').value = '';
+      document.getElementById('judul').value = '';
+      document.getElementById('matkul').value = '';
+      document.getElementById('deadline').value = '';
+    }
+
+    tampil();
+  </script>
+</body>
+</html>
